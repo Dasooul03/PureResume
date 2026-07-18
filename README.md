@@ -1,40 +1,33 @@
+<div align="center">
+
 # PureResume
 
-> 纯白极简、本地优先的 Markdown 简历编辑器。
+![License](https://img.shields.io/badge/License-MIT-171717.svg)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.6-3178C6.svg)
+![Local first](https://img.shields.io/badge/Storage-Local--first-171717.svg)
 
-PureResume 将一份 Markdown 简历实时渲染为可投递的 A4 预览，并可通过浏览器的“另存为 PDF”导出。简历内容只保存在当前浏览器，不需要账号，也不会上传到服务器。
+纯白极简的简历编辑器，可下载到本地使用，也可作为静态网页部署后直接在线使用。
 
-![License](https://img.shields.io/badge/license-MIT-171717.svg)
-![Local first](https://img.shields.io/badge/storage-local--first-171717.svg)
+</div>
 
-## 特性
+PureResume 让你使用 Markdown 编写简历，并实时预览为纯白 A4 简历。内容默认只保存在浏览器本地；完成后可下载 Markdown，或通过浏览器“另存为 PDF”直接投递。
 
-- 实时 Markdown → A4 简历预览，输入后自动保存到 `localStorage`
-- 三套纯白模板：经典单栏、紧凑双栏、现代留白
-- Markdown 行内格式：加粗、斜体、删除线、行内代码、链接与直接 URL
-- GFM 表格与 Typora 简写分隔行：`|---|---|`、`|-|-|`
-- 通用日期行：标题在左、日期固定右对齐，适用于教育、项目和实习等任何章节
-- 导入 `.md`、`.txt`、`.docx`；导出 Markdown；通过浏览器打印窗口保存 PDF
-- 纯色界面与纸张：不使用渐变、纹理、阴影、滤镜或动画特效
+## ✨ Features
 
-## 快速开始
+- 📝 Markdown 实时编辑与 A4 简历预览
+- 📄 经典单栏、紧凑双栏、现代留白三套纯白模板
+- 📅 通用标题/日期格式：日期自动右对齐，适用于教育、项目、实习等任意章节
+- 📊 支持 GFM 表格与 Typora 简写表格分隔行
+- ✍️ 支持加粗、斜体、删除线、行内代码、链接和直接 URL
+- 💾 自动保存到浏览器本地，刷新后可恢复草稿
+- 📥 导入 Markdown、TXT、DOCX；下载 Markdown 源文件
+- 📤 通过浏览器打印窗口导出 PDF
+- 📱 响应式布局，窄屏可切换编辑与预览
+- 🔒 不要求注册，不上传简历内容
 
-```bash
-npm install
-npm run dev
-```
+## 🧩 Markdown Format
 
-打开 [http://localhost:4173](http://localhost:4173)。`npm run dev` 会先构建 `dist/`，再启动本地静态预览服务。
-
-生产构建：
-
-```bash
-npm run build
-```
-
-## Markdown 写法
-
-### 基础结构
+基础结构：
 
 ```md
 # 姓名
@@ -45,18 +38,9 @@ npm run build
 
 ### 公司｜职位｜时间
 - 负责的工作或成果
-
-## 项目经历
-
-### 项目名称
-- 项目说明
 ```
 
-`#` 是姓名，`##` 是章节，`###` 是经历/项目标题，`-` 是要点。
-
-### 标题与日期右对齐
-
-使用“加粗标题 + 日期范围 + 详情”的单行格式；中间的空白只作分隔，日期位置由模板固定，不依赖空格数量：
+日期右对齐格式可用于任何章节：
 
 ```md
 **武汉东湖学院**　2020-07 ~ 2024-07　计算机科学学院 | 软件工程 | 本科
@@ -66,11 +50,9 @@ npm run build
 **成都欧督系统科技有限公司**　2026-03 ~ 2026-06　Agent 实习生
 ```
 
-渲染结果为标题与日期同一行、左右对齐，详情显示在下一行。这个格式可以放在教育、项目、实习或任意普通章节中。
+模板会将标题置于左侧、日期固定在右侧、详情显示在下一行；日期的位置不依赖空格数量。
 
-### 表格
-
-支持标准 GFM 表格以及 Typora 允许的紧凑分隔行：
+表格支持标准 GFM 和 Typora 简写：
 
 ```md
 | 公司 | 岗位 | 时间 |
@@ -78,27 +60,62 @@ npm run build
 | 成都欧督系统科技有限公司 | Agent 实习生 | 2026.03 ~ 2026.06 |
 ```
 
-### PDF 导出
+## 🛠️ Tech Stack
 
-点击“导出 PDF”后，在浏览器系统打印窗口选择“另存为 PDF”。导出复用当前模板和 A4 预览样式。
+- TypeScript
+- Vite
+- 原生 DOM 与 Browser APIs
+- 纯 CSS A4 打印样式
+- localStorage
 
-## 数据与边界
+## 🚀 Quick Start
 
-- 内容仅保存在当前浏览器的 `localStorage`；刷新后可恢复草稿。
-- `.docx` 导入会在浏览器中提取文本并转换为 Markdown；不支持旧 `.doc`、扫描 PDF 或 OCR。
-- PDF 是投递格式，Markdown 是可下载、可再次导入的源文件。
-- 当前版本不包含登录、云同步、多人协作、自由拖拽排版或 AI 内容生成。
+1. Clone the project
 
-## 相关开源项目
+```bash
+git clone https://github.com/Dasooul03/PureResume.git
+cd PureResume
+```
 
-PureResume 的实现独立于以下项目，但在产品能力取舍上参考了它们公开呈现的思路：
+2. Install dependencies
 
-- [JOYCEQL/magic-resume](https://github.com/JOYCEQL/magic-resume)：实时预览、本地保存与 PDF 输出的编辑体验。
-- [vangelov/devresume](https://github.com/vangelov/devresume)：无登录、离线优先、文本源驱动的简历工作流。
-- [NxResume/DualMode-ResumeEditor](https://github.com/NxResume/DualMode-ResumeEditor)：Markdown 编辑、多页预览与导出能力的产品方向。
+```bash
+npm install
+```
 
-PureResume 选择 Markdown 而非 YAML 作为用户源文件，并聚焦纯白、可稳定打印的本地简历编辑体验；未复制上述项目的代码、设计资源或品牌内容。
+3. Start local preview
 
-## License
+```bash
+npm run dev
+```
+
+4. Open [http://localhost:4173](http://localhost:4173)
+
+## 📦 Build & Online Use
+
+```bash
+npm run build
+```
+
+构建产物位于 `dist/`。将该目录部署到 GitHub Pages、Vercel、Netlify 或任意静态网站服务后，即可直接在线使用；无需后端、数据库或账号系统。
+
+## 🗺️ Roadmap
+
+- [x] Markdown 实时预览
+- [x] 三套纯白模板
+- [x] 本地自动保存
+- [x] MD / TXT / DOCX 导入
+- [x] PDF 打印导出
+- [x] GFM / Typora 表格支持
+- [ ] 更多简历模板
+- [ ] 自定义字体与字号
+- [ ] 多语言界面
+- [ ] 在线简历托管
+
+## 🙏 Inspiration
+
+PureResume 的 README 结构和产品能力取舍参考了 [Magic Resume](https://github.com/JOYCEQL/magic-resume) 的公开介绍，尤其是实时预览、本地保存、PDF 输出与模板能力的呈现方式。PureResume 的代码、视觉和 Markdown 规则为独立实现，未复制其代码或资源。
+
+## 📄 License
 
 [MIT](./LICENSE)
