@@ -135,7 +135,8 @@ function tableCells(line: string) {
 }
 
 function isTableDivider(line: string) {
-  return /^\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)+\|?$/.test(line)
+  // Typora also accepts a compact `|-|-|` divider, so accept one or more dashes.
+  return /^\|?\s*:?-+:?\s*(\|\s*:?-+:?\s*)+\|?$/.test(line)
 }
 
 function textBlocks(lines: string[]) {
@@ -143,6 +144,10 @@ function textBlocks(lines: string[]) {
   for (let index = 0; index < lines.length; index++) {
     const header = lines[index]
     const divider = lines[index + 1]
+    if (/^-{3,}$/.test(header)) {
+      blocks.push('<hr class="resume-rule">')
+      continue
+    }
     if (header.includes('|') && divider && isTableDivider(divider)) {
       const headings = tableCells(header)
       const rules = tableCells(divider)
