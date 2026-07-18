@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 
+# Unused Vite starter binary kept locally because it is not part of PureResume.
+src/assets/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
