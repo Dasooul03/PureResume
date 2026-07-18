@@ -223,13 +223,73 @@ function sizeHeaderPhotos() {
   })
 }
 
+function paginatePreview(preview: HTMLElement) {
+  const source = preview.querySelector<HTMLElement>('.resume-paper')
+  if (!source || source.classList.contains('compact-paper')) return
+  const header = Array.from(source.children).find((node) => node.classList.contains('resume-header'))
+  const content = Array.from(source.children).filter((node) => node !== header && node.tagName !== 'FOOTER') as HTMLElement[]
+  const documentPages = document.createElement('div')
+  documentPages.className = 'resume-document'
+  preview.replaceChildren(documentPages)
+
+  let pageBody: HTMLElement
+  const createPage = (includeHeader: boolean) => {
+    const page = document.createElement('div')
+    page.className = `${source.className} resume-page`
+    if (includeHeader && header) page.append(header.cloneNode(true))
+    pageBody = document.createElement('div')
+    pageBody.className = 'page-body'
+    page.append(pageBody)
+    documentPages.append(page)
+  }
+  const overflows = () => pageBody.scrollHeight > pageBody.clientHeight + 1
+  const addLongSection = (section: HTMLElement) => {
+    const sectionHeading = Array.from(section.children).find((node) => node.tagName === 'H3')
+    const sectionItems = Array.from(section.children).filter((node) => node !== sectionHeading) as HTMLElement[]
+    const startPart = () => {
+      const part = section.cloneNode(false) as HTMLElement
+      if (sectionHeading) part.append(sectionHeading.cloneNode(true))
+      pageBody.append(part)
+      return part
+    }
+    let part = startPart()
+    for (const item of sectionItems) {
+      part.append(item)
+      if (!overflows()) continue
+      part.removeChild(item)
+      if (part.children.length > (sectionHeading ? 1 : 0)) {
+        createPage(false)
+        part = startPart()
+      }
+      part.append(item)
+    }
+  }
+
+  createPage(true)
+  for (const node of content) {
+    pageBody.append(node)
+    if (!overflows()) continue
+    pageBody.removeChild(node)
+    if (pageBody.children.length) createPage(false)
+    pageBody.append(node)
+    if (overflows() && node.classList.contains('resume-section')) {
+      pageBody.removeChild(node)
+      addLongSection(node)
+    }
+  }
+}
+
 function updatePreview(markdown: string, persist = true) {
   const preview = document.querySelector<HTMLDivElement>('#preview')!
   const error = document.querySelector<HTMLDivElement>('#parse-error')!
   try {
     const rendered = renderDocument(markdown, photo)
     preview.innerHTML = rendered
-    window.requestAnimationFrame(sizeHeaderPhotos)
+    window.requestAnimationFrame(() => {
+      sizeHeaderPhotos()
+      paginatePreview(preview)
+      sizeHeaderPhotos()
+    })
     error.textContent = ''
     error.hidden = true
     if (persist) localStorage.setItem(STORAGE_KEY, JSON.stringify({ markdown, activeTemplate, photo }))
