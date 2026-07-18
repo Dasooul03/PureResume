@@ -79,7 +79,12 @@ function inline(value: string) {
     .replace(/\*([^*]+)\*/g, '<em>$1</em>')
     .replace(/(^|[^\w])_([^_]+)_/g, '$1<em>$2</em>')
 
-  return tokens.reduce((result, token, index) => result.replace(`@@PURE_RESUME_TOKEN_${index}@@`, token), html)
+  const restored = tokens.reduce((result, token, index) => result.replace(`@@PURE_RESUME_TOKEN_${index}@@`, token), html)
+  // HTML normally collapses whitespace. Preserve user-authored spacing everywhere,
+  // including between formatted spans such as `**学校**    时间`.
+  return restored
+    .replace(/\t/g, '<span class="markdown-tab">    </span>')
+    .replace(/ {2,}/g, (spaces) => `<span class="markdown-spaces">${spaces}</span>`)
 }
 
 function parseResume(markdown: string): Resume {

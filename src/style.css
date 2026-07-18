@@ -19,7 +19,7 @@ dialog { width: min(800px, 92vw); border: 1px solid #aaa; padding: 0; background
 .resume-paper strong { font-weight: 700; }
 .resume-paper em { font-style: italic; }
 .resume-paper s { color: #777; }
-.resume-paper code { padding: 1px 3px; border: 1px solid #d8d8d5; font: 10px/1.4 Consolas, monospace; white-space: nowrap; }
+.resume-paper code { padding: 1px 3px; border: 1px solid #d8d8d5; font: 10px/1.4 Consolas, monospace; white-space: nowrap; }.markdown-spaces, .markdown-tab { white-space: pre; }
 
 .resume-header { display: flex; align-items: flex-start; gap: 18px; }
 .resume-header .header-text { flex: 1; min-width: 0; }
