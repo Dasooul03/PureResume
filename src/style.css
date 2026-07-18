@@ -22,8 +22,8 @@ dialog { width: min(800px, 92vw); border: 1px solid #aaa; padding: 0; background
 .resume-paper s { color: #777; }
 .resume-paper code { padding: 1px 3px; border: 1px solid #d8d8d5; font: 10px/1.4 Consolas, monospace; white-space: nowrap; }.markdown-spaces, .markdown-tab { white-space: pre; }
 
-.resume-header { display: flex; align-items: stretch; gap: 18px; }
+.resume-header { display: flex; align-items: flex-start; gap: 18px; }
 .resume-header .header-text { flex: 1; min-width: 0; }
-.resume-photo { align-self: stretch; width: auto; height: auto; aspect-ratio: 1; object-fit: cover; border: 1px solid #e2e2df; flex: none; }
+.resume-photo { width: 1px; height: 1px; object-fit: cover; border: 1px solid #e2e2df; flex: none; }
 
 @media print { body { background: #fff; }.app-header, .sidebar, .editor-panel, .preview-panel > .panel-title { display: none !important; }.workspace, .preview-panel { display: block; min-height: 0; }.preview-canvas { padding: 0; overflow: visible; }.resume-paper { width: 210mm; min-height: 297mm; margin: 0; padding: 17mm 18mm; box-shadow: none; page-break-after: always; }.resume-paper footer { left: 18mm; right: 18mm; bottom: 10mm; } }

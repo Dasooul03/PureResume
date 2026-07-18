@@ -212,12 +212,24 @@ function renderDocument(markdown: string, photoParam: string = photo) {
   return `<div class="resume-paper ${activeTemplate === 'modern' ? 'modern-paper' : ''}">${headerWithPhoto}${summary}${sections.map(sectionHtml).join('')}<footer>PureResume · <span class="page-number"></span></footer></div>`
 }
 
+function sizeHeaderPhotos() {
+  document.querySelectorAll<HTMLElement>('.resume-header').forEach((header) => {
+    const text = header.querySelector<HTMLElement>('.header-text')
+    const image = header.querySelector<HTMLImageElement>('.resume-photo')
+    if (!text || !image) return
+    const size = Math.ceil(text.getBoundingClientRect().height)
+    image.style.width = `${size}px`
+    image.style.height = `${size}px`
+  })
+}
+
 function updatePreview(markdown: string, persist = true) {
   const preview = document.querySelector<HTMLDivElement>('#preview')!
   const error = document.querySelector<HTMLDivElement>('#parse-error')!
   try {
     const rendered = renderDocument(markdown, photo)
     preview.innerHTML = rendered
+    window.requestAnimationFrame(sizeHeaderPhotos)
     error.textContent = ''
     error.hidden = true
     if (persist) localStorage.setItem(STORAGE_KEY, JSON.stringify({ markdown, activeTemplate, photo }))
