@@ -145,6 +145,13 @@ function isTableDivider(line: string) {
   return /^\|?\s*:?-+:?\s*(\|\s*:?-+:?\s*)+\|?$/.test(line)
 }
 
+function datedLine(line: string) {
+  const dateRange = '(?:\\d{4}[./-]\\d{1,2}\\s*(?:~|至|—|-)\\s*(?:\\d{4}[./-]\\d{1,2}|至今))'
+  const match = line.match(new RegExp(`^(\\*\\*.+?\\*\\*)[\\s\\u3000]+(${dateRange})(?:[\\s\\u3000]+(.+))?$`))
+  if (!match) return null
+  return { title: match[1], date: match[2], detail: match[3] || '' }
+}
+
 function textBlocks(lines: string[]) {
   const blocks: string[] = []
   for (let index = 0; index < lines.length; index++) {
@@ -152,6 +159,11 @@ function textBlocks(lines: string[]) {
     const divider = lines[index + 1]
     if (/^-{3,}$/.test(header)) {
       blocks.push('<hr class="resume-rule">')
+      continue
+    }
+    const dated = datedLine(header)
+    if (dated) {
+      blocks.push(`<div class="dated-line"><span class="dated-title">${inline(dated.title)}</span><span class="dated-date">${inline(dated.date)}</span></div>${dated.detail ? `<p class="dated-detail">${inline(dated.detail)}</p>` : ''}`)
       continue
     }
     if (header.includes('|') && divider && isTableDivider(divider)) {
