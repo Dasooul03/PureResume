@@ -54,9 +54,31 @@ function escapeHtml(value: string) {
 }
 
 function inline(value: string) {
-  return escapeHtml(value)
-    .replace(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g, '<a href="$2" target="_blank" rel="noreferrer">$1</a>')
-    .replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank" rel="noreferrer">$1</a>')
+  const tokens: string[] = []
+  const stash = (html: string) => {
+    const marker = `@@PURE_RESUME_TOKEN_${tokens.length}@@`
+    tokens.push(html)
+    return marker
+  }
+  let html = escapeHtml(value)
+
+  // Protect elements that must not receive further Markdown substitutions.
+  html = html.replace(/`([^`]+)`/g, (_, code: string) => stash(`<code>${code}</code>`))
+  html = html.replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, (_, label: string, url: string) =>
+    stash(`<a href="${url}" target="_blank" rel="noreferrer">${label}</a>`),
+  )
+  html = html.replace(/(https?:\/\/[^\s<]+)/g, (_, url: string) =>
+    stash(`<a href="${url}" target="_blank" rel="noreferrer">${url}</a>`),
+  )
+
+  html = html
+    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+    .replace(/__([^_]+)__/g, '<strong>$1</strong>')
+    .replace(/~~([^~]+)~~/g, '<s>$1</s>')
+    .replace(/\*([^*]+)\*/g, '<em>$1</em>')
+    .replace(/(^|[^\w])_([^_]+)_/g, '$1<em>$2</em>')
+
+  return tokens.reduce((result, token, index) => result.replace(`@@PURE_RESUME_TOKEN_${index}@@`, token), html)
 }
 
 function parseResume(markdown: string): Resume {
