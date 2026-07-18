@@ -130,10 +130,42 @@ function isSideSection(title: string) {
   return /技能|教育|证书|语言|Skill|Education|Certificate|Language/i.test(title)
 }
 
+function tableCells(line: string) {
+  return line.trim().replace(/^\|/, '').replace(/\|$/, '').split('|').map((cell) => cell.trim())
+}
+
+function isTableDivider(line: string) {
+  return /^\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)+\|?$/.test(line)
+}
+
+function textBlocks(lines: string[]) {
+  const blocks: string[] = []
+  for (let index = 0; index < lines.length; index++) {
+    const header = lines[index]
+    const divider = lines[index + 1]
+    if (header.includes('|') && divider && isTableDivider(divider)) {
+      const headings = tableCells(header)
+      const rules = tableCells(divider)
+      const alignments = rules.map((rule) => rule.startsWith(':') && rule.endsWith(':') ? 'center' : rule.endsWith(':') ? 'right' : rule.startsWith(':') ? 'left' : '')
+      const rows: string[][] = []
+      index += 2
+      while (index < lines.length && lines[index].includes('|')) {
+        rows.push(tableCells(lines[index]))
+        index++
+      }
+      index--
+      blocks.push(`<div class="table-wrap"><table><thead><tr>${headings.map((cell, cellIndex) => `<th class="align-${alignments[cellIndex]}">${inline(cell)}</th>`).join('')}</tr></thead><tbody>${rows.map((row) => `<tr>${headings.map((_, cellIndex) => `<td class="align-${alignments[cellIndex]}">${inline(row[cellIndex] || '')}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`)
+      continue
+    }
+    blocks.push(`<p>${inline(header)}</p>`)
+  }
+  return blocks.join('')
+}
+
 function itemHtml(item: Resume['sections'][number]['items'][number]) {
   return `<article class="resume-item">
     ${item.heading ? `<h4>${inline(item.heading)}</h4>` : ''}
-    ${item.text.map((text) => `<p>${inline(text)}</p>`).join('')}
+    ${textBlocks(item.text)}
     ${item.bullets.length ? `<ul>${item.bullets.map((bullet) => `<li>${inline(bullet)}</li>`).join('')}</ul>` : ''}
   </article>`
 }
