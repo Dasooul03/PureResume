@@ -122,10 +122,9 @@ function parseResume(markdown: string): Resume {
     }
     if (state === 'contact') result.contact.push(line)
     else if (state === 'summary') result.summary += `${result.summary ? ' ' : ''}${line.replace(/^-\s*/, '')}`
-    else if (item && line.startsWith('- ')) item.bullets.push(line.slice(2))
-    else if (item) item.text.push(line)
+    else if (item) item.text.push(raw)
     else if (section) {
-      item = { heading: '', bullets: line.startsWith('- ') ? [line.slice(2)] : [], text: line.startsWith('- ') ? [] : [line] }
+      item = { heading: '', bullets: [], text: [raw] }
       section.items.push(item)
     }
   }
@@ -152,16 +151,52 @@ function datedLine(line: string) {
   return { title: match[1], date: match[2], detail: match[3] || '' }
 }
 
+type ListNode = { content: string; ordered: boolean; indent: number; children: ListNode[] }
+
+function listMarker(line: string) {
+  const match = line.replace(/\t/g, '    ').match(/^(\s*)([-+*]|\d+[.)])\s+(.+)$/)
+  if (!match) return null
+  return { indent: match[1].length, ordered: /^\d/.test(match[2]), content: match[3] }
+}
+
+function listHtml(lines: string[]) {
+  const roots: ListNode[] = []
+  const stack: ListNode[] = []
+  for (const line of lines) {
+    const marker = listMarker(line)
+    if (!marker) continue
+    const node: ListNode = { ...marker, children: [] }
+    while (stack.length && marker.indent <= stack[stack.length - 1].indent) stack.pop()
+    if (stack.length) stack[stack.length - 1].children.push(node)
+    else roots.push(node)
+    stack.push(node)
+  }
+  const renderNodes = (nodes: ListNode[]) => {
+    let html = ''
+    for (let index = 0; index < nodes.length;) {
+      const ordered = nodes[index].ordered
+      const group: ListNode[] = []
+      while (index < nodes.length && nodes[index].ordered === ordered) group.push(nodes[index++])
+      const tag = ordered ? 'ol' : 'ul'
+      html += `<${tag}>${group.map((node) => `<li>${inline(node.content)}${node.children.length ? renderNodes(node.children) : ''}</li>`).join('')}</${tag}>`
+    }
+    return html
+  }
+  return renderNodes(roots)
+}
+
 function textBlocks(lines: string[]) {
   const blocks: string[] = []
   for (let index = 0; index < lines.length; index++) {
     const header = lines[index]
+    const trimmedHeader = header.trim()
     const divider = lines[index + 1]
-    if (/^-{3,}$/.test(header)) {
+    if (!trimmedHeader) continue
+    if (/^-{3,}$/.test(trimmedHeader)) {
       blocks.push('<hr class="resume-rule">')
       continue
     }
-    const dated = datedLine(header)
+    const dated = datedLine(trimmedHeader)
     if (dated) {
       blocks.push(`<div class="dated-line"><span class="dated-title">${inline(dated.title)}</span><span class="dated-date">${inline(dated.date)}</span></div>${dated.detail ? `<p class="dated-detail">${inline(dated.detail)}</p>` : ''}`)
       continue
@@ -180,7 +215,14 @@ function textBlocks(lines: string[]) {
       blocks.push(`<div class="table-wrap"><table><thead><tr>${headings.map((cell, cellIndex) => `<th class="align-${alignments[cellIndex]}">${inline(cell)}</th>`).join('')}</tr></thead><tbody>${rows.map((row) => `<tr>${headings.map((_, cellIndex) => `<td class="align-${alignments[cellIndex]}">${inline(row[cellIndex] || '')}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`)
       continue
     }
-    blocks.push(`<p>${inline(header)}</p>`)
+    if (listMarker(header)) {
+      const listLines: string[] = []
+      while (index < lines.length && listMarker(lines[index])) listLines.push(lines[index++])
+      index--
+      blocks.push(listHtml(listLines))
+      continue
+    }
+    blocks.push(`<p>${inline(trimmedHeader)}</p>`)
   }
   return blocks.join('')
 }
@@ -207,9 +249,9 @@ function renderDocument(markdown: string, photoParam: string = photo) {
   if (activeTemplate === 'compact') {
     const left = sections.filter((section) => isSideSection(section.title)).map(sectionHtml).join('')
     const right = sections.filter((section) => !isSideSection(section.title)).map(sectionHtml).join('')
-    return `<div class="resume-paper compact-paper">${headerWithPhoto}<div class="two-column"><aside>${left}</aside><main>${summary}${right}</main></div><footer>PureResume · <span class="page-number"></span></footer></div>`
+    return `<div class="resume-paper compact-paper">${headerWithPhoto}<div class="two-column"><aside>${left}</aside><main>${summary}${right}</main></div><footer><span class="page-number">I</span></footer></div>`
   }
-  return `<div class="resume-paper ${activeTemplate === 'modern' ? 'modern-paper' : ''}">${headerWithPhoto}${summary}${sections.map(sectionHtml).join('')}<footer>PureResume · <span class="page-number"></span></footer></div>`
+  return `<div class="resume-paper ${activeTemplate === 'modern' ? 'modern-paper' : ''}">${headerWithPhoto}${summary}${sections.map(sectionHtml).join('')}<footer><span class="page-number">I</span></footer></div>`
 }
 
 function sizeHeaderPhotos() {
@@ -223,13 +265,117 @@ function sizeHeaderPhotos() {
   })
 }
 
+function paginatePreview(preview: HTMLElement) {
+  const source = preview.querySelector<HTMLElement>('.resume-paper')
+  if (!source || source.classList.contains('compact-paper')) return
+  const header = Array.from(source.children).find((node) => node.classList.contains('resume-header'))
+  const content = Array.from(source.children).filter((node) => node !== header && node.tagName !== 'FOOTER') as HTMLElement[]
+  const documentPages = document.createElement('div')
+  documentPages.className = 'resume-document'
+  preview.replaceChildren(documentPages)
+
+  let pageBody: HTMLElement
+  const createPage = (includeHeader: boolean) => {
+    const page = document.createElement('div')
+    page.className = `${source.className} resume-page`
+    if (includeHeader && header) page.append(header.cloneNode(true))
+    pageBody = document.createElement('div')
+    pageBody.className = 'page-body'
+    page.append(pageBody)
+    const footer = document.createElement('footer')
+    footer.innerHTML = '<span class="page-number"></span>'
+    page.append(footer)
+    documentPages.append(page)
+  }
+  const overflows = () => pageBody.scrollHeight > pageBody.clientHeight + 1
+  const addLongSection = (section: HTMLElement) => {
+    const sectionHeading = Array.from(section.children).find((node) => node.tagName === 'H3')
+    const sectionItems = Array.from(section.children).filter((node) => node !== sectionHeading) as HTMLElement[]
+    const startPart = () => {
+      const part = section.cloneNode(false) as HTMLElement
+      if (sectionHeading) part.append(sectionHeading.cloneNode(true))
+      pageBody.append(part)
+      return part
+    }
+    let part = startPart()
+    const addLongItem = (item: HTMLElement) => {
+      const itemHeading = Array.from(item.children).find((node) => node.tagName === 'H4')
+      const itemContent = Array.from(item.children) as HTMLElement[]
+      const startItemPart = () => {
+        const itemPart = item.cloneNode(false) as HTMLElement
+        if (itemHeading) itemPart.append(itemHeading.cloneNode(true))
+        part.append(itemPart)
+        return itemPart
+      }
+      let itemPart = startItemPart()
+      for (const piece of itemContent) {
+        if (piece === itemHeading) continue
+        itemPart.append(piece)
+        if (!overflows()) continue
+        itemPart.removeChild(piece)
+        if (itemPart.children.length === (itemHeading ? 1 : 0)) itemPart.remove()
+        if (part.children.length === (sectionHeading ? 1 : 0)) part.remove()
+        createPage(false)
+        part = startPart()
+        itemPart = startItemPart()
+        itemPart.append(piece)
+      }
+    }
+    for (const item of sectionItems) {
+      part.append(item)
+      if (!overflows()) continue
+      part.removeChild(item)
+      const isResponsibility = /^\d+\.\s/.test((item.textContent || '').trim()) && Boolean(item.querySelector('ul'))
+      if (isResponsibility) {
+        createPage(false)
+        part = startPart()
+        part.append(item)
+        continue
+      }
+      addLongItem(item)
+    }
+  }
+
+  createPage(true)
+  for (const node of content) {
+    pageBody.append(node)
+    if (!overflows()) continue
+    pageBody.removeChild(node)
+    if (node.classList.contains('resume-section')) {
+      addLongSection(node)
+      continue
+    }
+    if (pageBody.children.length) createPage(false)
+    pageBody.append(node)
+  }
+
+  Array.from(documentPages.children).forEach((page, index) => {
+    let remaining = index + 1
+    let roman = ''
+    const numerals: Array<[number, string]> = [
+      [1000, 'M'], [900, 'CM'], [500, 'D'], [400, 'CD'], [100, 'C'], [90, 'XC'],
+      [50, 'L'], [40, 'XL'], [10, 'X'], [9, 'IX'], [5, 'V'], [4, 'IV'], [1, 'I'],
+    ]
+    for (const [value, symbol] of numerals) {
+      const count = Math.floor(remaining / value)
+      roman += symbol.repeat(count)
+      remaining -= count * value
+    }
+    page.querySelector<HTMLElement>('.page-number')!.textContent = roman
+  })
+}
+
 function updatePreview(markdown: string, persist = true) {
   const preview = document.querySelector<HTMLDivElement>('#preview')!
   const error = document.querySelector<HTMLDivElement>('#parse-error')!
   try {
     const rendered = renderDocument(markdown, photo)
     preview.innerHTML = rendered
-    window.requestAnimationFrame(sizeHeaderPhotos)
+    window.requestAnimationFrame(() => {
+      sizeHeaderPhotos()
+      paginatePreview(preview)
+      sizeHeaderPhotos()
+    })
     error.textContent = ''
     error.hidden = true
     if (persist) localStorage.setItem(STORAGE_KEY, JSON.stringify({ markdown, activeTemplate, photo }))
@@ -338,7 +484,7 @@ function setup() {
       <button data-template="compact" class="template-choice"><b>紧凑双栏</b><span>技术与项目</span></button>
       <button data-template="modern" class="template-choice"><b>现代留白</b><span>简洁与国际化</span></button>
     </div><hr><div class="sidebar-title">章节</div><nav><a href="#editor">Markdown 源文件</a><a href="#preview">实时 A4 预览</a></nav><p class="local-note">仅保存于当前浏览器。</p></aside>
-    <section class="editor-panel"><div class="panel-title"><span>Markdown</span><span class="status-dot">自动保存</span></div><textarea id="editor" spellcheck="false" aria-label="Markdown 简历编辑器"></textarea><div id="parse-error" class="parse-error" hidden></div><div class="editor-help"><b>格式提示</b><code># 姓名</code><code>## 工作经历</code><code>### 公司｜职位｜时间</code><code>- 工作描述</code></div></section>
+    <section class="editor-panel"><div class="panel-title"><span>Markdown</span><span class="status-dot">自动保存</span></div><textarea id="editor" spellcheck="false" aria-label="Markdown 简历编辑器"></textarea><div id="parse-error" class="parse-error" hidden></div><div class="editor-help"><b>格式提示</b><code># 姓名</code><code>## 章节</code><code>### 条目标题</code><code>1. **职责标题**</code><code>&nbsp;&nbsp;&nbsp;- 子要点</code><code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- 二级要点</code></div></section>
     <section class="preview-panel"><div class="panel-title"><span>实时预览</span><span>A4 · ${activeTemplate === 'classic' ? '经典单栏' : activeTemplate === 'compact' ? '紧凑双栏' : '现代留白'}</span></div><div id="preview" class="preview-canvas"></div></section>
   </main>
   <dialog id="import-dialog"><form method="dialog"><h2>确认导入内容</h2><p>导入内容将转换为 Markdown；确认后会替换当前简历。</p><textarea id="import-text"></textarea><menu><button value="cancel">取消</button><button id="apply-import" value="default" class="primary">替换当前简历</button></menu></form></dialog>`

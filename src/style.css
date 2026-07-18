@@ -25,5 +25,7 @@ dialog { width: min(800px, 92vw); border: 1px solid #aaa; padding: 0; background
 .resume-header { display: flex; align-items: flex-start; gap: 18px; }
 .resume-header .header-text { flex: 1; min-width: 0; }
 .resume-photo { width: 1px; height: 1px; object-fit: cover; border: 1px solid #e2e2df; flex: none; }
+.resume-document { display: grid; gap: 28px; }.resume-page { height: 1123px; min-height: 1123px; display: flex; flex-direction: column; }.resume-page .page-body { flex: 1; min-height: 0; overflow: hidden; }.resume-page .resume-section:last-child { margin-bottom: 0; }
+.page-number::after { content: none; }.resume-page footer { position: static; flex: none; margin-top: 12px; }
 
-@media print { body { background: #fff; }.app-header, .sidebar, .editor-panel, .preview-panel > .panel-title { display: none !important; }.workspace, .preview-panel { display: block; min-height: 0; }.preview-canvas { padding: 0; overflow: visible; }.resume-paper { width: 210mm; min-height: 297mm; margin: 0; padding: 17mm 18mm; box-shadow: none; page-break-after: always; }.resume-paper footer { left: 18mm; right: 18mm; bottom: 10mm; } }
+@media print { @page { size: A4; margin: 0; } body { background: #fff; }.app-header, .sidebar, .editor-panel, .preview-panel > .panel-title { display: none !important; }.workspace, .preview-panel { display: block; min-height: 0; }.preview-canvas { padding: 0; overflow: visible; }.resume-document { display: block; }.resume-page { width: 210mm; height: 297mm; min-height: 297mm; margin: 0; padding: 17mm 18mm; break-after: page; page-break-after: always; }.resume-page:last-child { break-after: auto; page-break-after: auto; }.resume-page .page-body { overflow: hidden; } }
