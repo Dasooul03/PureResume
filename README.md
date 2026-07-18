@@ -112,10 +112,6 @@ npm run build
 - [ ] 多语言界面
 - [ ] 在线简历托管
 
-## 🙏 Inspiration
-
-PureResume 的 README 结构和产品能力取舍参考了 [Magic Resume](https://github.com/JOYCEQL/magic-resume) 的公开介绍，尤其是实时预览、本地保存、PDF 输出与模板能力的呈现方式。PureResume 的代码、视觉和 Markdown 规则为独立实现，未复制其代码或资源。
-
 ## 📄 License
 
 [MIT](./LICENSE)

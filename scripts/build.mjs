@@ -10,6 +10,6 @@ const output = ts.transpileModule(source, {
 await Promise.all([
   writeFile('dist/main.js', output),
   cp('src/style.css', 'dist/style.css'),
-  writeFile('dist/index.html', (await readFile('index.html', 'utf8')).replace('/src/main.ts', '/main.js').replace('</head>', '    <link rel="stylesheet" href="/style.css" />\n  </head>')),
+  writeFile('dist/index.html', (await readFile('index.html', 'utf8')).replace('/src/main.ts', './main.js').replace('</head>', '    <link rel="stylesheet" href="./style.css" />\n  </head>')),
 ])
 console.log('Built PureResume to dist/')
