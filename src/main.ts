@@ -45,6 +45,7 @@ const SAMPLE = `# 林墨
 
 const STORAGE_KEY = 'pureresume-document-v1'
 let activeTemplate: TemplateId = 'classic'
+let photo: string = ''
 let debounceTimer = 0
 
 const app = document.querySelector<HTMLDivElement>('#app')!
@@ -180,28 +181,30 @@ function sectionHtml(section: Resume['sections'][number]) {
   return `<section class="resume-section"><h3>${inline(section.title)}</h3>${body || '<p class="empty-section">待补充</p>'}</section>`
 }
 
-function renderDocument(markdown: string) {
+function renderDocument(markdown: string, photoParam: string = photo) {
   const resume = parseResume(markdown)
   const summary = resume.summary ? `<section class="resume-section summary"><h3>个人简介</h3><p>${inline(resume.summary)}</p></section>` : ''
   const sections = resume.sections.filter((section) => !/个人简介|summary/i.test(section.title))
-  const header = `<header class="resume-header"><h1>${inline(resume.name)}</h1><p>${resume.contact.map(inline).join('<span class="dot">·</span>')}</p></header>`
+  const photoTag = photoParam ? `<img class="resume-photo" src="${escapeHtml(photoParam)}" alt="头像">` : ''
+  const headerWithPhoto = `<header class="resume-header">${photoTag}<div class="header-text"><h1>${inline(resume.name)}</h1><p>${resume.contact.map(inline).join('<span class="dot">·</span>')}</p></div></header>`
+  const headerNoPhoto = `<header class="resume-header"><div class="header-text"><h1>${inline(resume.name)}</h1><p>${resume.contact.map(inline).join('<span class="dot">·</span>')}</p></div></header>`
   if (activeTemplate === 'compact') {
-    const left = sections.filter((section) => isSideSection(section.title)).map(sectionHtml).join('')
+    const left = (photoParam ? `<div class="side-photo">${photoTag}</div>` : '') + sections.filter((section) => isSideSection(section.title)).map(sectionHtml).join('')
     const right = sections.filter((section) => !isSideSection(section.title)).map(sectionHtml).join('')
-    return `<div class="resume-paper compact-paper">${header}<div class="two-column"><aside>${left}</aside><main>${summary}${right}</main></div><footer>PureResume · <span class="page-number"></span></footer></div>`
+    return `<div class="resume-paper compact-paper">${headerNoPhoto}<div class="two-column"><aside>${left}</aside><main>${summary}${right}</main></div><footer>PureResume · <span class="page-number"></span></footer></div>`
   }
-  return `<div class="resume-paper ${activeTemplate === 'modern' ? 'modern-paper' : ''}">${header}${summary}${sections.map(sectionHtml).join('')}<footer>PureResume · <span class="page-number"></span></footer></div>`
+  return `<div class="resume-paper ${activeTemplate === 'modern' ? 'modern-paper' : ''}">${headerWithPhoto}${summary}${sections.map(sectionHtml).join('')}<footer>PureResume · <span class="page-number"></span></footer></div>`
 }
 
 function updatePreview(markdown: string, persist = true) {
   const preview = document.querySelector<HTMLDivElement>('#preview')!
   const error = document.querySelector<HTMLDivElement>('#parse-error')!
   try {
-    const rendered = renderDocument(markdown)
+    const rendered = renderDocument(markdown, photo)
     preview.innerHTML = rendered
     error.textContent = ''
     error.hidden = true
-    if (persist) localStorage.setItem(STORAGE_KEY, JSON.stringify({ markdown, activeTemplate }))
+    if (persist) localStorage.setItem(STORAGE_KEY, JSON.stringify({ markdown, activeTemplate, photo }))
   } catch (reason) {
     error.textContent = `暂未渲染：${reason instanceof Error ? reason.message : 'Markdown 格式错误'}。预览保留上一次有效内容。`
     error.hidden = false
@@ -269,14 +272,40 @@ async function importFile(file: File) {
   }
 }
 
+function importPhoto(file: File) {
+  const reader = new FileReader()
+  reader.onload = () => {
+    const img = new Image()
+    img.onload = () => {
+      const maxSize = 320
+      const scale = Math.min(1, maxSize / Math.max(img.width, img.height))
+      const width = Math.round(img.width * scale)
+      const height = Math.round(img.height * scale)
+      const canvas = document.createElement('canvas')
+      canvas.width = width
+      canvas.height = height
+      canvas.getContext('2d')!.drawImage(img, 0, 0, width, height)
+      photo = canvas.toDataURL('image/jpeg', 0.85)
+      const editor = document.querySelector<HTMLTextAreaElement>('#editor')!
+      updatePreview(editor.value)
+      document.querySelector<HTMLButtonElement>('#remove-photo')!.hidden = false
+    }
+    img.onerror = () => window.alert('头像图片解析失败，请换一张图片重试。')
+    img.src = reader.result as string
+  }
+  reader.onerror = () => window.alert('头像读取失败，请换一张图片重试。')
+  reader.readAsDataURL(file)
+}
+
 function setup() {
   const saved = localStorage.getItem(STORAGE_KEY)
-  const initial = saved ? JSON.parse(saved) : { markdown: SAMPLE, activeTemplate: 'classic' }
+  const initial = saved ? JSON.parse(saved) : { markdown: SAMPLE, activeTemplate: 'classic', photo: '' }
   activeTemplate = initial.activeTemplate as TemplateId
+  photo = initial.photo || ''
   app.innerHTML = `
   <header class="app-header"><div><span class="brand-mark">P</span><strong>PureResume</strong><small>纯白极简简历编辑器</small></div><div class="header-actions"><button id="download-md">下载 Markdown</button><button id="export-pdf" class="primary">导出 PDF</button></div></header>
   <main class="workspace">
-    <aside class="sidebar"><div class="sidebar-title">简历设置</div><button id="new-resume">新建空白简历</button><label class="file-button">导入 MD / TXT / DOCX<input id="import-file" type="file" accept=".md,.txt,.docx" hidden></label><hr><div class="sidebar-title">模板</div><div class="templates">
+    <aside class="sidebar"><div class="sidebar-title">简历设置</div><button id="new-resume">新建空白简历</button><label class="file-button">导入 MD / TXT / DOCX<input id="import-file" type="file" accept=".md,.txt,.docx" hidden></label><hr><div class="sidebar-title">人像照片</div><label class="file-button">导入头像<input id="import-photo" type="file" accept="image/*" hidden></label><button id="remove-photo" hidden>移除头像</button><hr><div class="sidebar-title">模板</div><div class="templates">
       <button data-template="classic" class="template-choice"><b>经典单栏</b><span>正式与清晰</span></button>
       <button data-template="compact" class="template-choice"><b>紧凑双栏</b><span>技术与项目</span></button>
       <button data-template="modern" class="template-choice"><b>现代留白</b><span>简洁与国际化</span></button>
@@ -308,6 +337,20 @@ function setup() {
     const file = (event.target as HTMLInputElement).files?.[0]
     if (!file) return
     try { await importFile(file) } catch (error) { window.alert(`导入失败：${error instanceof Error ? error.message : '未知错误'}`) }
+  })
+  const importPhotoInput = document.querySelector<HTMLInputElement>('#import-photo')!
+  importPhotoInput.addEventListener('change', (event) => {
+    const file = (event.target as HTMLInputElement).files?.[0]
+    if (!file) return
+    importPhoto(file)
+    ;(event.target as HTMLInputElement).value = ''
+  })
+  const removePhotoButton = document.querySelector<HTMLButtonElement>('#remove-photo')!
+  if (photo) removePhotoButton.hidden = false
+  removePhotoButton.addEventListener('click', () => {
+    photo = ''
+    updatePreview(editor.value)
+    removePhotoButton.hidden = true
   })
 }
 
