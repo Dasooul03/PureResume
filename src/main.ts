@@ -203,12 +203,11 @@ function renderDocument(markdown: string, photoParam: string = photo) {
   const summary = resume.summary ? `<section class="resume-section summary"><h3>个人简介</h3><p>${inline(resume.summary)}</p></section>` : ''
   const sections = resume.sections.filter((section) => !/个人简介|summary/i.test(section.title))
   const photoTag = photoParam ? `<img class="resume-photo" src="${escapeHtml(photoParam)}" alt="头像">` : ''
-  const headerWithPhoto = `<header class="resume-header">${photoTag}<div class="header-text"><h1>${inline(resume.name)}</h1><p>${resume.contact.map(inline).join('<span class="dot">·</span>')}</p></div></header>`
-  const headerNoPhoto = `<header class="resume-header"><div class="header-text"><h1>${inline(resume.name)}</h1><p>${resume.contact.map(inline).join('<span class="dot">·</span>')}</p></div></header>`
+  const headerWithPhoto = `<header class="resume-header"><div class="header-text"><h1>${inline(resume.name)}</h1><p>${resume.contact.map(inline).join('<span class="dot">·</span>')}</p></div>${photoTag}</header>`
   if (activeTemplate === 'compact') {
-    const left = (photoParam ? `<div class="side-photo">${photoTag}</div>` : '') + sections.filter((section) => isSideSection(section.title)).map(sectionHtml).join('')
+    const left = sections.filter((section) => isSideSection(section.title)).map(sectionHtml).join('')
     const right = sections.filter((section) => !isSideSection(section.title)).map(sectionHtml).join('')
-    return `<div class="resume-paper compact-paper">${headerNoPhoto}<div class="two-column"><aside>${left}</aside><main>${summary}${right}</main></div><footer>PureResume · <span class="page-number"></span></footer></div>`
+    return `<div class="resume-paper compact-paper">${headerWithPhoto}<div class="two-column"><aside>${left}</aside><main>${summary}${right}</main></div><footer>PureResume · <span class="page-number"></span></footer></div>`
   }
   return `<div class="resume-paper ${activeTemplate === 'modern' ? 'modern-paper' : ''}">${headerWithPhoto}${summary}${sections.map(sectionHtml).join('')}<footer>PureResume · <span class="page-number"></span></footer></div>`
 }
