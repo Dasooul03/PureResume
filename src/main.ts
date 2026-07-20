@@ -32,8 +32,8 @@ const SAMPLE = `# 林墨
 
 ## 项目经历
 
-**PureResume**　2026-01 ~ 至今　本地简历编辑器
-- 设计 Markdown 解析与实时 A4 预览链路，支持纯白模板和 PDF 打印导出。
+**PureResume**　2026-01 ~ 至今　AI 简历转面试展示 PDF 工具
+- 设计 Markdown 解析与实时 A4 预览链路，将 AI 生成的简历转换为纯白模板与 PDF。
 - 实现本地草稿保存、MD/TXT/DOCX 导入与多页排版。
 
 **Orbit Design System**　2024-03 ~ 2025-12　企业组件平台
@@ -480,7 +480,7 @@ function setup() {
   activeTemplate = initial.activeTemplate as TemplateId
   photo = initial.photo || ''
   app.innerHTML = `
-  <header class="app-header"><div><span class="brand-mark">P</span><strong>PureResume</strong><small>纯白极简简历编辑器</small></div><div class="header-actions"><button id="download-md">下载 Markdown</button><button id="export-pdf" class="primary">导出 PDF</button></div></header>
+  <header class="app-header"><div><span class="brand-mark">P</span><strong>PureResume</strong><small>AI 简历转面试展示 PDF</small></div><div class="header-actions"><button id="download-md">下载 Markdown</button><button id="export-pdf" class="primary">导出 PDF</button></div></header>
   <main class="workspace">
     <aside class="sidebar"><div class="sidebar-title">简历设置</div><button id="new-resume">新建空白简历</button><label class="file-button">导入 MD / TXT / DOCX<input id="import-file" type="file" accept=".md,.txt,.docx" hidden></label><hr><div class="sidebar-title">人像照片</div><label class="file-button">导入头像<input id="import-photo" type="file" accept="image/*" hidden></label><button id="remove-photo" hidden>移除头像</button><hr><div class="sidebar-title">模板</div><div class="templates">
       <button data-template="classic" class="template-choice"><b>经典单栏</b><span>正式与清晰</span></button>
