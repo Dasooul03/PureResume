@@ -1,6 +1,6 @@
 # PureResume
 
-将 AI 生成的 Markdown 简历转换为更适合面试官阅读与展示的 PDF 文件。可直接在线使用，也可下载到本地运行；在浏览器中整理内容、选择模板并实时预览为 A4 页面，再通过打印窗口导出 PDF。
+PureResume 将 AI 生成的 Markdown 简历转换为更适合面试官阅读与展示的纯白 PDF 文件。可直接在线使用，也可下载到本地运行；在浏览器中整理内容、选择模板并实时预览为 A4 页面，再通过打印窗口导出 PDF。
 
 在线使用：[https://dasooul03.github.io/PureResume/](https://dasooul03.github.io/PureResume/)
 
